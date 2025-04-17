@@ -289,6 +289,13 @@ export class YBaseCell<Metadata extends nbformat.IBaseCellMetadata>
   }
 
   /**
+   * Signal triggered when the cell undo manager changes.
+   */
+  get undoManagerChanged(): ISignal<this, void> {
+    return this._undoManagerChanged;
+  }
+
+  /**
    * Defer setting the undo manager as it requires the
    * cell to be attached to the notebook Y document.
    */
@@ -301,6 +308,7 @@ export class YBaseCell<Metadata extends nbformat.IBaseCellMetadata>
       this._undoManager = new Y.UndoManager([this.ymodel], {
         trackedOrigins: new Set([this])
       });
+      this._undoManagerChanged.emit()
     }
   }
 
@@ -677,6 +685,7 @@ export class YBaseCell<Metadata extends nbformat.IBaseCellMetadata>
   private _isDisposed = false;
   private _prevSourceLength: number;
   private _undoManager: Y.UndoManager | null = null;
+  private _undoManagerChanged = new Signal<this, void>(this);
   private _ymetadata: Y.Map<any>;
   private _ysource: Y.Text;
 }

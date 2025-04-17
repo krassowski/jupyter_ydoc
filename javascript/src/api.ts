@@ -466,6 +466,11 @@ export interface ISharedBaseCell<
   readonly metadataChanged: ISignal<this, IMapChange>;
 
   /**
+   * Signal triggered when the cell undo manager changes.
+   */
+  readonly undoManagerChanged: ISignal<this, void>;
+
+  /**
    * The notebook that this cell belongs to.
    */
   readonly notebook: ISharedNotebook | null;
