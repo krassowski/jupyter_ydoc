@@ -170,16 +170,7 @@ class YNotebook(YBaseDoc):
                 del cell["attachments"]
         elif cell_type == "code":
             outputs = cell.get("outputs", [])
-            for idx, output in enumerate(outputs):
-                if output.get("output_type") == "stream":
-                    text = output.get("text", "")
-                    if isinstance(text, str):
-                        ytext = Text(text)
-                    else:
-                        ytext = Text("".join(text))
-                    output["text"] = ytext
-                outputs[idx] = Map(output)
-            cell["outputs"] = Array(outputs)
+            cell["outputs"] = Array(self._create_outputs(outputs))
             cell["execution_state"] = "idle"
 
         return Map(cell)
@@ -331,6 +322,28 @@ class YNotebook(YBaseDoc):
         self._subscriptions[self._ymeta] = self._ymeta.observe_deep(partial(callback, "meta"))
         self._subscriptions[self._ycells] = self._ycells.observe_deep(partial(callback, "cells"))
 
+    def _create_outputs(self, outputs: list[dict[str, Any]]) -> list[Map]:
+        """
+        Creates a list of YMaps with the content of the outputs.
+
+        :param outputs: A list of outputs.
+        :type outputs: list[Dict[str, Any]]
+
+        :return: A list of output YMaps.
+        :rtype: list[:class:`pycrdt.Map`]
+        """
+        new_outputs = []
+        for output in outputs:
+            if output.get("output_type") == "stream":
+                text = output.get("text", "")
+                if isinstance(text, str):
+                    ytext = Text(text)
+                else:
+                    ytext = Text("".join(text))
+                output["text"] = ytext
+            new_outputs.append(Map(output))
+        return new_outputs
+
     def _update_cell(self, old_cell: dict, new_cell: dict, old_ycell: Map) -> bool:
         if old_cell == new_cell:
             return True
@@ -345,10 +358,6 @@ class YNotebook(YBaseDoc):
         for key in shared_keys:
             if old_cell[key] != new_cell[key]:
                 value = new_cell[key]
-                if key == "outputs" and value:
-                    # outputs require complex handling - some have Text type nested;
-                    # for now skip creating them; clearing all outputs is fine
-                    return False
 
                 if key in _CELL_KEY_TYPE_MAP:
                     kind = _CELL_KEY_TYPE_MAP[key]
@@ -364,7 +373,10 @@ class YNotebook(YBaseDoc):
                     elif kind == Array:
                         old: Array = old_ycell[key]
                         old.clear()
-                        old.extend(value)
+                        if key == "outputs":
+                            old.extend(self._create_outputs(copy.deepcopy(value)))
+                        else:
+                            old.extend(value)
                     elif kind == Map:
                         old: Map = old_ycell[key]
                         old.clear()

@@ -145,7 +145,7 @@ class ExpectedEvent:
         ([["outputs", []]], [ExpectedEvent(ArrayEvent, path=[0, "outputs"])]),
         (
             [["outputs", [{"name": "stdout", "output_type": "stream", "text": "b\n"}]]],
-            [ExpectedEvent(ArrayEvent, path=[])],
+            [ExpectedEvent(ArrayEvent, path=[0, "outputs"])],
         ),
         ([["execution_count", 2]], [ExpectedEvent(MapEvent)]),
         ([["metadata", {"tags": []}]], [ExpectedEvent(MapEvent)]),
